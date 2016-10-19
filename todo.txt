@@ -1,0 +1,68 @@
+DONE
+###########
+
+inte skriva over tomma boxar, ha kopia for nu
+win state
+splitta ut hund till klass
+refaktorisera utplaceringen av gubben
+inte ha dubbla index i player
+bark
+	stopppa efter en viss tid
+
+animationer
+	*animera en ruta f;r knapptryck
+	*animera overgang mellan rutor,
+	*animera lador
+	*visa goal under ani 
+	*stanna gubben i bland
+	*stoppa ani n'r man klarar bnaan
+	
+	
+	
+
+ljud
+	*spela ljud vid place, bark triumph
+	*randomisera hundljud
+	*ta fram nytt ljud for restart
+	*enbart spela place om boxen gar fran tom till goal???
+	*komprimera ljuden	
+	
+skriva ut grattis n'r man klarar banan.
+fade ut till svart n'r man klarar banan
+	
+ritordning
+
+kunna ga genom att halla ner knapp
+snabba upp plushdog
+ha en ikon
+
+*visa antal steg n'r man klarar banan samt vilken bana det var.
+
+TODO
+###########
+	ta bara 1 kliv om det 'r uppat eller nedat, men gora varannat kliv!
+	
+s'tta alla knappar sa de stammer med menyn
+	*arrows
+	*toogle sound
+	gora fejd out mer generel till:
+	show instructions
+	choose level
+
+	aven modet med game ending skall in dar...
+	ga in i helt egna Modes nar man kor instructios och setlevel etc for att itne pollute main loop..
+	dar inne skall aven text visas.
+
+	
+highscore
+
+BRATTHA
+##########
+skapa n[gon form av basklass som gor basala saker tex fade, setta upp skit mm.
+inkapsla div. statejox i huvudklassen i en ny klass?	
+fullscreen
+applicera en func p[ varje objekt i arrayen, det blir manga iterationer nu]
+menyer
+kunna debugga
+placera p github
+placera pa pygmae.org
