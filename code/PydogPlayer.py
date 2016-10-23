@@ -23,7 +23,7 @@ class PydogPlayer:
 		self.maxMoveCounterX = 32
 		self.moveCounterX = 0
 		self.moveCounterXStep= 4
-		self.moveCounterYStep= 4
+		self.moveCounterYStep= 3
 
 		self.aniFront.append(pygame.image.load('data/dog/fram1.gif'))
 		self.aniFront.append(pygame.image.load('data/dog/fram2.gif'))
