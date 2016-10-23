@@ -3,6 +3,7 @@ from pygame.locals import *
 from pygame import *
 from code.PydogLevel import PydogLevel
 from code.PydogPlayer import PydogPlayer
+from code.Highscore import Highscore
 
 class PyDogGame(object):		
 	def run(self):
@@ -44,6 +45,7 @@ class PyDogGame(object):
 		self.mute = False
 
 		self.pydogLevel = PydogLevel()
+		self.highscore = Highscore()
 		self.player = PydogPlayer()
 
 		self.DISPLAYSURF = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
@@ -123,14 +125,31 @@ class PyDogGame(object):
 
 			if self.win(level) and not self.player.isMoving():
 				self.playSound(self.sound_win)
+				currentHighscore = self.highscore.getHighscore(self.levelIndex)
+				setupLevel = True
+
+				nextLevelTexts = ['Level '+str(self.levelIndex+1)+ ' cleared in ' +str(numSteps)+ ' steps!','']
+
+				if currentHighscore is not None:
+					if numSteps < currentHighscore:
+						nextLevelTexts.append('New highscore! Previous was: ' + str(currentHighscore) + ' steps.')
+						self.highscore.setHighscore(self.levelIndex,numSteps)
+					else:
+						nextLevelTexts.append('Current highscore: ' + str(currentHighscore) + ' steps.')
+					nextLevelTexts.append('')
+				else:
+					self.highscore.setHighscore(self.levelIndex,numSteps)
+				
 				self.levelIndex +=1
 				if self.levelIndex >= self.pydogLevel.numLevels():
-					self.lastLevelScreen()
+					nextLevelTexts.append('Last level reached! End of game.')
+					nextLevelTexts.append('')
+
+				nextLevelTexts.append('Press SPACE to continue.')
+				self.nextLevelScreen(nextLevelTexts)
+				if self.levelIndex >= self.pydogLevel.numLevels():
 					self.levelIndex=0
 					return
-
-				setupLevel = True
-				self.nextLevelScreen('Level '+str(self.levelIndex)+ ' cleared in ' +str(numSteps)+ ' steps!  Press SPACE to continue.')
 
 			for h in xrange(0,self.HEIGHT,self.floor_height):
 				for w in xrange(0,self.WIDTH,self.floor_width):
@@ -284,19 +303,6 @@ class PyDogGame(object):
 			textRenders.append(  (self.fontObj.render(text,True, self.WHITE, self.BLACK),Rect(margin,y,self.WIDTH-marginx2,100))   )
 
 		self.textMode(textRenders)
-		
-	def lastLevelScreen(self):
-		texts = ["Last level reached.","If you played through all levels, congratulations!","Press SPACE to return to title screen."]
-	
-		textRenders =[]
-		margin=50
-		marginx2 = margin*2
-		textOffset=20
-		for i,text in enumerate(texts):
-			y = margin + (textOffset * i)
-			textRenders.append(  (self.fontObj.render(text,True, self.WHITE, self.BLACK),Rect(margin,y,self.WIDTH-marginx2,100))   )
-
-		self.textMode(textRenders)
 
 	def selectLevelScreen(self):
 		alphaMaxLevel = 255
@@ -306,16 +312,18 @@ class PyDogGame(object):
 		alphaSurface.fill((0,0,0))
 		alphaSurface.set_alpha(alpha) 
 		bgImage =self.DISPLAYSURF.copy()
-		
+		highscore = self.highscore.getHighscore(self.levelIndex)
 		maxLevel = self.pydogLevel.numLevels()
 		
 		texts = [('Choose level with arrow keys. Press SPACE to enter level!',self.fontObj),
 		('',self.fontObj),
-		('Level:',self.fontObj),
-		(str(self.levelIndex+1),self.fontObjLarge)]
+		('Level:',self.fontObj)]
+		
+		texts.append((str(self.levelIndex+1),self.fontObjLarge))
 		
 		textRenders =[]	
 		textOffset = 20
+		levelChanged = True
 
 		for i,text in enumerate(texts):
 			y = textOffset * i
@@ -329,33 +337,43 @@ class PyDogGame(object):
 			self.DISPLAYSURF.blit(bgImage, (0,0))
 			self.DISPLAYSURF.blit(alphaSurface,(0,0))
 
+			if levelChanged:
+				highscore = self.highscore.getHighscore(self.levelIndex)
+				text = str(self.levelIndex+1)
+				if highscore is not None:
+					text+= ' (Hi-score: ' + str(highscore)
+				render = self.fontObjLarge.render(text,True, self.WHITE, self.BLACK)
+				rect = render.get_rect()
+				rect.center = (self.WIDTH/2, yValue)
+				textRenders[len(textRenders)-1] = (render,rect)	
+				levelChanged=False
+			
 			if alpha < alphaMaxLevel:
 				alpha += alphaIncrement
 				alphaSurface.set_alpha(alpha) 
 			else:
 				for tr in textRenders:
 					self.DISPLAYSURF.blit(tr[0], tr[1])
-	
-			render = self.fontObjLarge.render(str(self.levelIndex+1),True, self.WHITE, self.BLACK)
-			rect = render.get_rect()
-			rect.center = (self.WIDTH/2, yValue)
-			textRenders[len(textRenders)-1] = (render,rect)
-
+		
 			for event in pygame.event.get():
 				if event.type == pygame.KEYDOWN:
 					if event.key == pygame.K_UP:
 						if self.levelIndex+1 < maxLevel:
 							self.levelIndex +=1		
 							self.pydogLevel.getLevel(self.levelIndex)
+							levelChanged = True
 					if event.key == pygame.K_DOWN:
 						if self.levelIndex>0:
-							self.levelIndex -=1				
+							self.levelIndex -=1	
+							levelChanged = True							
 					if event.key == pygame.K_LEFT:
 						if self.levelIndex-10 >= 0:
-							self.levelIndex -=10				
+							self.levelIndex -=10	
+							levelChanged = True							
 					if event.key == pygame.K_RIGHT:
 						if self.levelIndex+10 < maxLevel:
 							self.levelIndex +=10
+							levelChanged = True
 					if event.key == pygame.K_SPACE:
 						return
 				if event.type == QUIT:
@@ -364,12 +382,18 @@ class PyDogGame(object):
 			pygame.display.update()
 			self.fpsClock.tick(self.FPS)
 		
-	def nextLevelScreen(self,text):
-		textRenders =[]	
-		textSurfaceObj = self.fontObj.render(text, True, self.WHITE, self.BLACK)
-		textRectObj = textSurfaceObj.get_rect()
-		textRectObj.center = (self.WIDTH/2, self.HEIGHT/2)
-		textRenders.append((textSurfaceObj,textRectObj))
+	def nextLevelScreen(self,texts):
+		textRenders =[]		
+		textOffset = 20
+
+		for i,text in enumerate(texts):
+			y = textOffset * i
+			textSurfaceObj = self.fontObj.render(text,True, self.WHITE, self.BLACK)
+			textRectObj = textSurfaceObj.get_rect()
+			yValue = (self.HEIGHT/2) + y -50
+			textRectObj.center = (self.WIDTH/2, yValue)
+			textRenders.append((textSurfaceObj,textRectObj))
+
 		self.textMode(textRenders)
 
 	def titleScreen(self):
@@ -380,6 +404,9 @@ class PyDogGame(object):
 
 			for event in pygame.event.get():
 				if event.type == pygame.KEYDOWN:
+					if event.key == pygame.K_x:
+						self.selectLevelScreen()
+						self.gameLoop()
 					if event.key == pygame.K_SPACE:
 						self.gameLoop()
 						pygame.display.set_caption("plush dog's sokoban ")
