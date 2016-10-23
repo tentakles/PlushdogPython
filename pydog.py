@@ -21,6 +21,7 @@ class PyDogGame(object):
 		self.device =  pygame.image.load('data/other/device6.gif')
 		self.goal =  pygame.image.load('data/other/button.gif')
 		self.icon =  pygame.image.load('data/other/icon.gif')
+		self.muteIcon =  pygame.image.load('data/other/mute.gif')
 
 		self.sound_dog1 =  pygame.mixer.Sound('data/sound/dog.ogg')
 		self.sound_dog2 =  pygame.mixer.Sound('data/sound/dog2.ogg')
@@ -28,6 +29,9 @@ class PyDogGame(object):
 		self.sound_win =  pygame.mixer.Sound('data/sound/triumph.ogg')
 		self.sound_fail =  pygame.mixer.Sound('data/sound/fail.ogg')
 
+		self.mutePosX = 20
+		self.mutePosY = 20
+		
 		self.FPS = 30 # frames per second setting
 		self.fpsClock = pygame.time.Clock()
 
@@ -56,6 +60,7 @@ class PyDogGame(object):
 		pygame.key.set_repeat (100, 250)
 
 		self.fontObj = pygame.font.Font('freesansbold.ttf', 16)
+		self.fontObjLarge = pygame.font.Font('freesansbold.ttf', 24)
 
 	def win(self,level):
 		for row,line in enumerate(level):	
@@ -174,6 +179,9 @@ class PyDogGame(object):
 					if type is self.OBJECT_BOX:
 							self.DISPLAYSURF.blit(self.device, (col*self.floor_width,row*self.floor_height-60+ self.y_offset))
 
+			if self.mute:
+				self.DISPLAYSURF.blit(self.muteIcon, (self.mutePosX,self.mutePosY))
+							
 			for event in pygame.event.get():
 				if event.type == pygame.KEYDOWN:
 					if event.key == pygame.K_w or event.key == pygame.K_UP: #move up
@@ -194,7 +202,7 @@ class PyDogGame(object):
 							numSteps +=1
 					elif event.key == pygame.K_c: #mute	
 						self.mute = not self.mute
-						#todo show visual indicator
+						pygame.mixer.stop()
 					elif event.key == pygame.K_b: #bark			
 						self.player.setAni('BARK')
 						self.playSound(random.choice([self.sound_dog1, self.sound_dog2]))
@@ -301,18 +309,20 @@ class PyDogGame(object):
 		
 		maxLevel = self.pydogLevel.numLevels()
 		
-		texts = ['Choose level with arrow keys. Press SPACE to enter level!',
-		'',
-		'Level:',
-		str(self.levelIndex+1)]
+		texts = [('Choose level with arrow keys. Press SPACE to enter level!',self.fontObj),
+		('',self.fontObj),
+		('Level:',self.fontObj),
+		(str(self.levelIndex+1),self.fontObjLarge)]
 		
 		textRenders =[]	
 		textOffset = 20
+
 		for i,text in enumerate(texts):
 			y = textOffset * i
-			textSurfaceObj = self.fontObj.render(text,True, self.WHITE, self.BLACK)
+			textSurfaceObj = text[1].render(text[0],True, self.WHITE, self.BLACK)
 			textRectObj = textSurfaceObj.get_rect()
-			textRectObj.center = (self.WIDTH/2, (self.HEIGHT/2) + y -50)
+			yValue = (self.HEIGHT/2) + y -50
+			textRectObj.center = (self.WIDTH/2, yValue)
 			textRenders.append((textSurfaceObj,textRectObj))
 
 		while True:
@@ -325,8 +335,11 @@ class PyDogGame(object):
 			else:
 				for tr in textRenders:
 					self.DISPLAYSURF.blit(tr[0], tr[1])
-					
-			textRenders[len(textRenders)-1] = (self.fontObj.render(str(self.levelIndex+1),True, self.WHITE, self.BLACK),textRenders[len(textRenders)-1][1])
+	
+			render = self.fontObjLarge.render(str(self.levelIndex+1),True, self.WHITE, self.BLACK)
+			rect = render.get_rect()
+			rect.center = (self.WIDTH/2, yValue)
+			textRenders[len(textRenders)-1] = (render,rect)
 
 			for event in pygame.event.get():
 				if event.type == pygame.KEYDOWN:
