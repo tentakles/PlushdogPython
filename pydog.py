@@ -3,292 +3,382 @@ from pygame.locals import *
 from pygame import *
 from code.PydogLevel import PydogLevel
 from code.PydogPlayer import PydogPlayer
-pygame.init()
-WIDTH = 640
-HEIGHT = 480
-BLACK = ( 0, 0, 0)
-WHITE = (255, 255, 255)
 
-titleScreenImg = pygame.image.load('data\other\intro.jpg')
-floor =  pygame.image.load('data/other/floor.gif')
-obstacle =  pygame.image.load('data/other/obstacle.gif')
-device =  pygame.image.load('data/other/device6.gif')
-goal =  pygame.image.load('data/other/button.gif')
-icon =  pygame.image.load('data/other/icon.gif')
+class PyDogGame(object):		
+	def run(self):
+		self.titleScreen()
 
-sound_dog1 =  pygame.mixer.Sound('data/sound/dog.ogg')
-sound_dog2 =  pygame.mixer.Sound('data/sound/dog2.ogg')
-sound_place =  pygame.mixer.Sound('data/sound/laser.ogg')
-sound_win =  pygame.mixer.Sound('data/sound/triumph.ogg')
-sound_fail =  pygame.mixer.Sound('data/sound/fail.ogg')
+	def __init__(self, screen_size):	
+		pygame.init()
+		self.WIDTH = screen_size[0]
+		self.HEIGHT = screen_size[1]
+		self.BLACK = ( 0, 0, 0)
+		self.WHITE = (255, 255, 255)
 
-FPS = 30 # frames per second setting
-fpsClock = pygame.time.Clock()
+		self.titleScreenImg = pygame.image.load('data\other\intro.jpg')
+		self.floor =  pygame.image.load('data/other/floor.gif')
+		self.obstacle =  pygame.image.load('data/other/obstacle.gif')
+		self.device =  pygame.image.load('data/other/device6.gif')
+		self.goal =  pygame.image.load('data/other/button.gif')
+		self.icon =  pygame.image.load('data/other/icon.gif')
 
-y_offset = 50 #todo calculcate this to center
-x_offset = 10 # todo implement and calculate this to center
-floor_height=20
-floor_width=32
-levelIndex = 0
+		self.sound_dog1 =  pygame.mixer.Sound('data/sound/dog.ogg')
+		self.sound_dog2 =  pygame.mixer.Sound('data/sound/dog2.ogg')
+		self.sound_place =  pygame.mixer.Sound('data/sound/laser.ogg')
+		self.sound_win =  pygame.mixer.Sound('data/sound/triumph.ogg')
+		self.sound_fail =  pygame.mixer.Sound('data/sound/fail.ogg')
 
-mute = False
+		self.FPS = 30 # frames per second setting
+		self.fpsClock = pygame.time.Clock()
 
-pydogLevel = PydogLevel()
-player = PydogPlayer()
+		self.y_offset = 50 #todo calculcate this to center
+		self.x_offset = 10 # todo implement and calculate this to center
+		self.floor_height=20
+		self.floor_width=32
+		self.levelIndex = 0
 
-pygame.display.set_icon(icon)
-DISPLAYSURF = pygame.display.set_mode((WIDTH, HEIGHT))
+		self.mute = False
 
-alphaSurface = Surface((WIDTH, HEIGHT)) # The custom-surface of the size of the screen.
-alphaSurface.fill((0,0,0)) # Fill it with whole white before the main-loop.
-alphaSurface.set_alpha(0) # Set alpha to 0 before the main-loop.
+		self.pydogLevel = PydogLevel()
+		self.player = PydogPlayer()
 
-OBJECT_BLOCK ='#'
-OBJECT_PLAYER ='@'
-OBJECT_GOAL ='.'
-OBJECT_BOX ='$'
-OBJECT_MOVING_BOX ='X'
-OBJECT_EMPTY =' '
-OBJECT_GOAL_AND_BOX ='Z'
+		self.DISPLAYSURF = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
 
-pygame.key.set_repeat (100, 250)
+		self.OBJECT_BLOCK ='#'
+		self.OBJECT_PLAYER ='@'
+		self.OBJECT_GOAL ='.'
+		self.OBJECT_BOX ='$'
+		self.OBJECT_MOVING_BOX ='X'
+		self.OBJECT_EMPTY =' '
+		self.OBJECT_GOAL_AND_BOX ='Z'
+		
+		pygame.display.set_icon(self.icon)
+		pygame.key.set_repeat (100, 250)
 
-fontObj = pygame.font.Font('freesansbold.ttf', 16)
+		self.fontObj = pygame.font.Font('freesansbold.ttf', 16)
 
-def main():
-	titleScreen()
-
-def win(level):
-	for row,line in enumerate(level):	
-		for col,type in enumerate(line):
-			if type is OBJECT_GOAL:
-				return False
-	return True
-	
-def playSound(sound,mute):
-	if mute is False:
-		pygame.mixer.stop()
-		sound.play()
-
-def isOkStep(level,x,y,xNext,yNext,levelOrg):
-	if player.isMoving():
-		return False
-	obj = level[y][x]
-	if obj is OBJECT_BLOCK:
-		return False
-	if obj is OBJECT_EMPTY or obj is OBJECT_PLAYER or obj is OBJECT_GOAL:
+	def win(self,level):
+		for row,line in enumerate(level):	
+			for col,type in enumerate(line):
+				if type is self.OBJECT_GOAL:
+					return False
 		return True
-	if obj is OBJECT_BOX:
-			objNext = level[yNext][xNext]
-			if objNext is OBJECT_GOAL or objNext is OBJECT_EMPTY:
-				replaceWith = OBJECT_EMPTY	
-				if objNext is OBJECT_GOAL and levelOrg[y][x] is not OBJECT_GOAL:
-					playSound(sound_place,mute)
-				if levelOrg[y][x] is OBJECT_GOAL:
-					replaceWith = OBJECT_GOAL
+	
+	def playSound(self,sound):
+		if self.mute is False:
+			pygame.mixer.stop()
+			sound.play()
+
+	def isOkStep(self,level,x,y,xNext,yNext,levelOrg):
+		if self.player.isMoving():
+			return False
+		obj = level[y][x]
+		if obj is self.OBJECT_BLOCK:
+			return False
+		if obj is self.OBJECT_EMPTY or obj is self.OBJECT_PLAYER or obj is self.OBJECT_GOAL:
+			return True
+		if obj is self.OBJECT_BOX:
+				objNext = level[yNext][xNext]
+				if objNext is self.OBJECT_GOAL or objNext is self.OBJECT_EMPTY:
+					replaceWith = self.OBJECT_EMPTY	
+					if objNext is self.OBJECT_GOAL and levelOrg[y][x] is not self.OBJECT_GOAL:
+						self.playSound(self.sound_place)
+					if levelOrg[y][x] is self.OBJECT_GOAL:
+						replaceWith = self.OBJECT_GOAL
+						
+					level[y][x] = replaceWith
+					level[yNext][xNext] = self.OBJECT_MOVING_BOX
 					
-				level[y][x] = replaceWith
-				level[yNext][xNext] = OBJECT_MOVING_BOX
-				
-				return True
-	return False
+					return True
+		return False
 		
-def placePlayer(level, player):
-	for row,line in enumerate(level):	
-		for col,type in enumerate(line):
-			if type is OBJECT_PLAYER:				
-					player.x=col
-					player.y=row
-					break	
+	def placePlayer(self,level, player):
+		for row,line in enumerate(level):	
+			for col,type in enumerate(line):
+				if type is self.OBJECT_PLAYER:				
+						player.x=col
+						player.y=row
+						break	
 
-def gameLoop():
-	
-	global levelIndex
-	global y_offset
-	global player
-	global mute
-	setupLevel = True
-	nextLevel = False
-	showInstructions = False
-	chooseLevel = False	
-	numSteps = 0
+	def gameLoop(self):
+		setupLevel = True
+		showInstructions = False
+		chooseLevel = False	
+		numSteps = 0
 
-	while True: 
-		if setupLevel is True:
-				level = pydogLevel.getLevel(levelIndex)
-				levelOrg = pydogLevel.getLevel(levelIndex)
-				placePlayer(level,player)
-				setupLevel = False
-				player.stopAnimation()
-				alpha = 0
-				alphaSurface.set_alpha(0) 	
-				pygame.display.set_caption("plush dog's sokoban. Level: " + str(levelIndex+1))
-	
+		while True: 
+			if setupLevel is True:
+				level = self.pydogLevel.getLevel(self.levelIndex)
+				levelOrg = self.pydogLevel.getLevel(self.levelIndex)
+				self.placePlayer(level,self.player)			
+				self.player.stopAnimation()
+				pygame.display.set_caption("plush dog's sokoban. Level: " + str(self.levelIndex+1))
 				numSteps = 0
+				setupLevel = False
 
-		if win(level) and not nextLevel:
-			playSound(sound_win,mute)
-			levelIndex +=1
-			nextLevel = True
+			if self.win(level) and not self.player.isMoving():
+				self.playSound(self.sound_win)
+				self.levelIndex +=1
+				if self.levelIndex >= self.pydogLevel.numLevels():
+					self.lastLevelScreen()
+					self.levelIndex=0
+					return
+
+				setupLevel = True
+				self.nextLevelScreen('Level '+str(self.levelIndex)+ ' cleared in ' +str(numSteps)+ ' steps!  Press SPACE to continue.')
+
+			for h in xrange(0,self.HEIGHT,self.floor_height):
+				for w in xrange(0,self.WIDTH,self.floor_width):
+					self.DISPLAYSURF.blit(self.floor, (w,h))
+
+			for row,line in enumerate(level):	
+				for col,type in enumerate(line):
+					if type is self.OBJECT_GOAL:
+							self.DISPLAYSURF.blit(self.goal, (col*self.floor_width,row*self.floor_height-20 + self.y_offset))
+					if type is self.OBJECT_BLOCK:
+							self.DISPLAYSURF.blit(self.obstacle, (col*self.floor_width,row*self.floor_height - 30+ self.y_offset))
 			
-			textRenders =[]	
-			textSurfaceObj = fontObj.render('Level '+str(levelIndex)+ ' cleared in ' +str(numSteps)+ ' steps!  Press ENTER to continue.', True, WHITE, BLACK)
-			textRectObj = textSurfaceObj.get_rect()
-			textRectObj.center = (WIDTH/2, HEIGHT/2)
-			textRenders.append((textSurfaceObj,textRectObj))
+			playerX = self.player.x*self.floor_width 		
+			if self.player.direction is 'LEFT':
+				playerX+= self.player.moveCounterX
+			if self.player.direction is 'RIGHT':
+				playerX-= self.player.moveCounterX
+			playerY = self.player.y*self.floor_height-64 + self.y_offset
+			if self.player.direction is 'UP':
+				playerY+= self.player.moveCounterY
+			if self.player.direction is 'DOWN':
+				playerY-= self.player.moveCounterY
 			
-		for h in xrange(0,HEIGHT,floor_height):
-			for w in xrange(0,WIDTH,floor_width):
-				DISPLAYSURF.blit(floor, (w,h))
+			for row,line in enumerate(level):	
+				if self.player.y is row:
+					self.DISPLAYSURF.blit(self.player.getFrame(), (playerX,playerY))
 
-		for row,line in enumerate(level):	
-			for col,type in enumerate(line):
-				if type is OBJECT_GOAL:
-						DISPLAYSURF.blit(goal, (col*floor_width,row*floor_height-20 + y_offset))
-				if type is OBJECT_BLOCK:
-						DISPLAYSURF.blit(obstacle, (col*floor_width,row*floor_height - 30+ y_offset))
-		
-		playerX = player.x*floor_width 		
-		if player.direction is 'LEFT':
-			playerX+= player.moveCounterX
-		if player.direction is 'RIGHT':
-			playerX-= player.moveCounterX
-		playerY = player.y*floor_height-64 + y_offset
-		if player.direction is 'UP':
-			playerY+= player.moveCounterY
-		if player.direction is 'DOWN':
-			playerY-= player.moveCounterY
-		
-		for row,line in enumerate(level):	
-			if player.y is row:
-				DISPLAYSURF.blit(player.getFrame(), (playerX,playerY))
+				for col,type in enumerate(line):
+					if type is self.OBJECT_MOVING_BOX:
+						boxX = col*self.floor_width
+						boxY = row*self.floor_height-60+ self.y_offset
+						if levelOrg[row][col] is self.OBJECT_GOAL:
+							self.DISPLAYSURF.blit(self.goal, (boxX,boxY+40))
+						if self.player.direction is 'LEFT':
+							boxX+= self.player.moveCounterX
+						if self.player.direction is 'RIGHT':
+							boxX-= self.player.moveCounterX
+						if self.player.direction is 'UP':
+							boxY+= self.player.moveCounterY
+						if self.player.direction is 'DOWN':
+							boxY-= self.player.moveCounterY
+						self.DISPLAYSURF.blit(self.device, (boxX,boxY))
+						if(not self.player.isMoving()):
+							level[row][col] = self.OBJECT_BOX
+								
+					if type is self.OBJECT_BOX:
+							self.DISPLAYSURF.blit(self.device, (col*self.floor_width,row*self.floor_height-60+ self.y_offset))
 
-			for col,type in enumerate(line):
-				if type is OBJECT_MOVING_BOX:
-					boxX = col*floor_width
-					boxY = row*floor_height-60+ y_offset
-					if levelOrg[row][col] is OBJECT_GOAL:
-						DISPLAYSURF.blit(goal, (boxX,boxY+40))
-					if player.direction is 'LEFT':
-						boxX+= player.moveCounterX
-					if player.direction is 'RIGHT':
-						boxX-= player.moveCounterX
-					if player.direction is 'UP':
-						boxY+= player.moveCounterY
-					if player.direction is 'DOWN':
-						boxY-= player.moveCounterY
-					DISPLAYSURF.blit(device, (boxX,boxY))
-					if(not player.isMoving()):
-						level[row][col] = OBJECT_BOX
-							
-				if type is OBJECT_BOX:
-						DISPLAYSURF.blit(device, (col*floor_width,row*floor_height-60+ y_offset))
-	
-		if nextLevel or showInstructions or chooseLevel:
-			DISPLAYSURF.blit(alphaSurface,(0,0))
-			if alpha < 255:
-				alpha += 8 
+			for event in pygame.event.get():
+				if event.type == pygame.KEYDOWN:
+					if event.key == pygame.K_w or event.key == pygame.K_UP: #move up
+						if self.isOkStep(level,self.player.x,self.player.y-1,self.player.x,self.player.y-2,levelOrg):
+							self.player.setAni('UP')
+							numSteps +=1
+					elif event.key == pygame.K_s or event.key == pygame.K_DOWN: #move down
+						if self.isOkStep(level,self.player.x,self.player.y+1,self.player.x,self.player.y+2,levelOrg):
+							self.player.setAni('DOWN')
+							numSteps +=1
+					elif event.key == pygame.K_d or event.key == pygame.K_RIGHT: #move right
+						if self.isOkStep(level,self.player.x+1,self.player.y,self.player.x+2,self.player.y,levelOrg):
+							self.player.setAni('RIGHT')
+							numSteps +=1
+					elif event.key == pygame.K_a or event.key == pygame.K_LEFT: #move left
+						if self.isOkStep(level,self.player.x-1,self.player.y,self.player.x-2,self.player.y,levelOrg):
+							self.player.setAni('LEFT')
+							numSteps +=1
+					elif event.key == pygame.K_c: #mute	
+						self.mute = not self.mute
+						#todo show visual indicator
+					elif event.key == pygame.K_b: #bark			
+						self.player.setAni('BARK')
+						self.playSound(random.choice([self.sound_dog1, self.sound_dog2]))
+					elif event.key == pygame.K_SPACE: #restart
+						setupLevel = True
+						self.playSound(self.sound_fail)
+					elif event.key == pygame.K_z: #next level
+						self.levelIndex +=1
+						setupLevel = True
+					elif event.key == pygame.K_x: #choose level				
+						self.selectLevelScreen()
+						setupLevel = True
+					elif event.key == pygame.K_ESCAPE: #go to menu
+						return
+					elif event.key == pygame.K_v: #go instructions			
+						self.helpScreen()
+
+				if event.type == QUIT:
+					pygame.quit()
+					sys.exit()
+
+			pygame.display.update()
+			self.fpsClock.tick(self.FPS)
+
+	def textMode(self,textRenders):
+		alphaMaxLevel = 255
+		alphaIncrement = 8
+		alpha=0
+		alphaSurface = Surface((self.WIDTH, self.HEIGHT))
+		alphaSurface.fill((0,0,0))
+		alphaSurface.set_alpha(alpha) 
+		bgImage =self.DISPLAYSURF.copy()
+
+		while True: 
+			self.DISPLAYSURF.blit(bgImage, (0,0))
+			self.DISPLAYSURF.blit(alphaSurface,(0,0))
+
+			if alpha < alphaMaxLevel:
+				alpha += alphaIncrement
 				alphaSurface.set_alpha(alpha) 
 			else:
 				for tr in textRenders:
-					DISPLAYSURF.blit(tr[0], tr[1])
+					self.DISPLAYSURF.blit(tr[0], tr[1])
 
-		for event in pygame.event.get():
-			if event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_w or event.key == pygame.K_UP: #move up
-					if isOkStep(level,player.x,player.y-1,player.x,player.y-2,levelOrg):
-						player.setAni('UP')
-						numSteps +=1
-				elif event.key == pygame.K_s or event.key == pygame.K_DOWN: #move down
-					if isOkStep(level,player.x,player.y+1,player.x,player.y+2,levelOrg):
-						player.setAni('DOWN')
-						numSteps +=1
-				elif event.key == pygame.K_d or event.key == pygame.K_RIGHT: #move right
-					if isOkStep(level,player.x+1,player.y,player.x+2,player.y,levelOrg):
-						player.setAni('RIGHT')
-						numSteps +=1
-				elif event.key == pygame.K_a or event.key == pygame.K_LEFT: #move left
-					if isOkStep(level,player.x-1,player.y,player.x-2,player.y,levelOrg):
-						player.setAni('LEFT')
-						numSteps +=1
-				elif event.key == pygame.K_c: #mute	
-					mute = not mute
-				elif event.key == pygame.K_b: #bark			
-					player.setAni('BARK')
-					playSound(random.choice([sound_dog1, sound_dog2]),mute)
-				elif event.key == pygame.K_SPACE: #restart
-					setupLevel = True
-					playSound(sound_fail,mute)
-				elif event.key == pygame.K_x: #next level
-					levelIndex +=1
-					setupLevel = True
-				elif event.key == pygame.K_z: #previous level
-					if levelIndex > 0:
-						levelIndex -=1
-						setupLevel = True
-				elif event.key == pygame.K_ESCAPE: #go to menu
-					return
-				elif event.key == pygame.K_RETURN: #go to next
-					nextLevel = False
-					setupLevel = True
-				elif event.key == pygame.K_v: #go to next
-				
-					texts  =[]
-					texts.append("Instructions: Your goal is to help plush dog finish every level")
-					texts.append("by placing all objects on the red dots.")
-					texts.append("Try not jamming the objects in to a corner,")
-					texts.append("there is no way to get them out of there!")
-					texts.append("")
-					texts.append("User interface:")
-					texts.append("arrows: moves the dog")
-					texts.append("esc: ends the game")
-					texts.append("space: restarts level")
-					texts.append("z: skip one level ahead")
-					texts.append("x: choose level")
-					texts.append("b: dog barks")
-					texts.append("v: toggle instructions on/off")
-					texts.append("c: toggle sound on/off")
+			for event in pygame.event.get():
+				if event.type == pygame.KEYDOWN:
+					if event.key == pygame.K_SPACE:
+						return
+				if event.type == QUIT:
+					pygame.quit()
+					sys.exit()
+			pygame.display.update()
+			self.fpsClock.tick(self.FPS)
+		
+	def helpScreen(self):
+		texts  =["Instructions: Your goal is to help plush dog finish every level",
+		"by placing all objects on the red dots.",
+		"Try not jamming the objects in to a corner,",
+		"there is no way to get them out of there!",
+		"",
+		"User interface:",
+		" arrows: moves the dog",
+		" esc: ends the game",
+		" space: restarts level",
+		" z: skip one level ahead",
+		" x: choose level",
+		" b: dog barks",
+		" v: show instructions",
+		" c: toggle sound on/off",
+		"",
+		"Press SPACE to continue!"]
+		
+		textRenders =[]
+		margin=50
+		marginx2 = margin*2
+		textOffset=20
+		for i,text in enumerate(texts):
+			y = margin + (textOffset * i)
+			textRenders.append(  (self.fontObj.render(text,True, self.WHITE, self.BLACK),Rect(margin,y,self.WIDTH-marginx2,100))   )
 
-					textRenders =[]
+		self.textMode(textRenders)
+		
+	def lastLevelScreen(self):
+		texts = ["Last level reached.","If you played through all levels, congratulations!","Press SPACE to return to title screen."]
+	
+		textRenders =[]
+		margin=50
+		marginx2 = margin*2
+		textOffset=20
+		for i,text in enumerate(texts):
+			y = margin + (textOffset * i)
+			textRenders.append(  (self.fontObj.render(text,True, self.WHITE, self.BLACK),Rect(margin,y,self.WIDTH-marginx2,100))   )
+
+		self.textMode(textRenders)
+
+	def selectLevelScreen(self):
+		alphaMaxLevel = 255
+		alphaIncrement = 8
+		alpha=0
+		alphaSurface = Surface((self.WIDTH, self.HEIGHT))
+		alphaSurface.fill((0,0,0))
+		alphaSurface.set_alpha(alpha) 
+		bgImage =self.DISPLAYSURF.copy()
+		
+		maxLevel = self.pydogLevel.numLevels()
+		
+		texts = ['Choose level with arrow keys. Press SPACE to enter level!',
+		'',
+		'Level:',
+		str(self.levelIndex+1)]
+		
+		textRenders =[]	
+		textOffset = 20
+		for i,text in enumerate(texts):
+			y = textOffset * i
+			textSurfaceObj = self.fontObj.render(text,True, self.WHITE, self.BLACK)
+			textRectObj = textSurfaceObj.get_rect()
+			textRectObj.center = (self.WIDTH/2, (self.HEIGHT/2) + y -50)
+			textRenders.append((textSurfaceObj,textRectObj))
+
+		while True:
+			self.DISPLAYSURF.blit(bgImage, (0,0))
+			self.DISPLAYSURF.blit(alphaSurface,(0,0))
+
+			if alpha < alphaMaxLevel:
+				alpha += alphaIncrement
+				alphaSurface.set_alpha(alpha) 
+			else:
+				for tr in textRenders:
+					self.DISPLAYSURF.blit(tr[0], tr[1])
 					
-					margin=20
-					marginx2 = margin*2
-					textOffset=20
-					for i,text in enumerate(texts):
-						y = margin + (textOffset * i)
-						textRenders.append(  (fontObj.render(text,True, WHITE, BLACK),Rect(margin,y,WIDTH-marginx2,100))   )
+			textRenders[len(textRenders)-1] = (self.fontObj.render(str(self.levelIndex+1),True, self.WHITE, self.BLACK),textRenders[len(textRenders)-1][1])
 
-					alpha= 0
-					alphaSurface.set_alpha(0) 	
-						
-					showInstructions = not showInstructions
+			for event in pygame.event.get():
+				if event.type == pygame.KEYDOWN:
+					if event.key == pygame.K_UP:
+						if self.levelIndex+1 < maxLevel:
+							self.levelIndex +=1		
+							self.pydogLevel.getLevel(self.levelIndex)
+					if event.key == pygame.K_DOWN:
+						if self.levelIndex>0:
+							self.levelIndex -=1				
+					if event.key == pygame.K_LEFT:
+						if self.levelIndex-10 >= 0:
+							self.levelIndex -=10				
+					if event.key == pygame.K_RIGHT:
+						if self.levelIndex+10 < maxLevel:
+							self.levelIndex +=10
+					if event.key == pygame.K_SPACE:
+						return
+				if event.type == QUIT:
+					pygame.quit()
+					sys.exit()
+			pygame.display.update()
+			self.fpsClock.tick(self.FPS)
+		
+	def nextLevelScreen(self,text):
+		textRenders =[]	
+		textSurfaceObj = self.fontObj.render(text, True, self.WHITE, self.BLACK)
+		textRectObj = textSurfaceObj.get_rect()
+		textRectObj.center = (self.WIDTH/2, self.HEIGHT/2)
+		textRenders.append((textSurfaceObj,textRectObj))
+		self.textMode(textRenders)
 
-			if event.type == QUIT:
-				pygame.quit()
-				sys.exit()
+	def titleScreen(self):
+		pygame.display.set_caption("plush dog's sokoban ")
+		
+		while True:	
+			self.DISPLAYSURF.blit(self.titleScreenImg, (0,0))
 
-		pygame.display.update()
-		fpsClock.tick(FPS)
-	
-def titleScreen():
-	pygame.display.set_caption("plush dog's sokoban ")
-	
-	while True: # main game loop	
-		DISPLAYSURF.blit(titleScreenImg, (0,0))
+			for event in pygame.event.get():
+				if event.type == pygame.KEYDOWN:
+					if event.key == pygame.K_SPACE:
+						self.gameLoop()
+						pygame.display.set_caption("plush dog's sokoban ")
+				if event.type == QUIT:
+					pygame.quit()
+					sys.exit()
+			pygame.display.update()
+			self.fpsClock.tick(self.FPS)
 
-		for event in pygame.event.get():
-			if event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_SPACE:
-					gameLoop()
-					pygame.display.set_caption("plush dog's sokoban ")
-			if event.type == QUIT:
-				pygame.quit()
-				sys.exit()
-		pygame.display.update()
-		fpsClock.tick(FPS)
 
-if __name__ == '__main__':
-	main()
+if __name__ == "__main__":
+    game = PyDogGame((640, 480))
+    game.run()
 
-	
 
